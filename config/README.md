@@ -31,6 +31,7 @@ They have a structure like:
 
   "model_file": "data/project-model.h5",
   "model_params": "data/project-model-params.json",
+  "trained_model_file": "data/project-model-trained.h5",
 
   "test_file": "corpus/project/test/test1.txt"
   
