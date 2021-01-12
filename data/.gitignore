@@ -1,0 +1,7 @@
+*.bin
+*.h5
+*.json
+*.jsonl
+*.pickle
+*.tfrecords
+*.txt

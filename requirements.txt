@@ -1,0 +1,10 @@
+fasttext
+gensim
+jsonlines
+nltk
+numpy
+pandas
+pdfplumber
+scikit-learn
+spacy
+tensorflow
