@@ -32,6 +32,9 @@ Project=$1
 ##  Build the X-Y samples.
 ./text-perword-xy.py "${Project}"
 
+##  Split into train & validation sets.
+./text-split.py "${Project}"
+
 ##  Compile the TFRecords.
 ./text-compile.py "${Project}"
 
