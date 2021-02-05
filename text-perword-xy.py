@@ -9,7 +9,6 @@ from lib.Config import config_from_tag
 
 config = config_from_tag( sys.argv[ 1 ] )
 context_size = config[ 'per_word_context' ]
-dimensions = 300
 
 blank_x = [ 0 ] * context_size
 
