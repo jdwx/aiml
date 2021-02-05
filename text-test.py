@@ -36,24 +36,25 @@ with open( config[ 'embed_weights' ], 'rb' ) as f:
 print( "Loading index..." )
 index = Index( config[ 'index_file' ] )
 
-doc = list( tokens_from_file( config[ 'test_file' ] ) )
-keys = index.words_to_keys( doc )
-keys = np.array( [ 0 ] * ( 500 - len( keys ) ) + keys )
-keys.shape = ( 1, 500 )
-# print( keys )
-
-
+print( "Loading model..." )
 model = tf.keras.models.load_model( config[ 'trained_model_file' ] )
 input_length = model.layers[ 0 ].input_length
 
+doc = list( tokens_from_file( config[ 'test_file' ] ) )
+keys = index.words_to_keys( doc )
+keys = np.array( [ 0 ] * ( input_length - len( keys ) ) + keys[ -input_length : ] )
+keys.shape = ( 1, input_length )
+# print( keys )
+
+
 words = []
-for i in range( 25 ):
-    # print( keys )
+for i in range( 50 ):
+    print( keys )
     y = model.predict( keys )[ 0 ]
     # print( y )
-    key = cossimit( y )
+    key = y.argmax()
     word = index.key_to_word[ key ]
-    print( key, word )
+    print( y[ key ], key, word )
 
     keys = np.append( keys[ : , 1 : ], [ [ key ] ], 1 )
     # print( keys )

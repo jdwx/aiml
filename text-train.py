@@ -10,14 +10,16 @@ from tensorflow.data import AUTOTUNE
 
 def read_tfrecord( example, tffeatures ):
     example = tf.io.parse_single_example( example, features = tffeatures )
-    return example[ 'data' ], example[ 'label' ]
+    # y = example[ 'label' ]
+    y = tf.SparseTensor( indices = [ example[ 'label' ] ], values = [ 1.0 ], dense_shape = [ vocab_size ] )
+    return example[ 'data' ], tf.sparse.to_dense( y )
 
 
 def get_dataset( filenames, tffeatures, batch_size ):
-    options = tf.data.Options()
-    options.experimental_deterministic = False
+    ds_options = tf.data.Options()
+    ds_options.experimental_deterministic = False
     dataset = tf.data.TFRecordDataset( filenames )
-    dataset = dataset.with_options( options )
+    dataset = dataset.with_options( ds_options )
     dataset = dataset.map(
         partial( read_tfrecord, tffeatures = tffeatures ),
         num_parallel_calls = AUTOTUNE
@@ -47,16 +49,28 @@ if not os.path.exists( checkpoint_dir ):
     print( "Making checkpoint directory." )
     os.makedirs( checkpoint_dir )
 
-model = make_or_restore_model( checkpoint_dir, "model.h5" )
-xfeatures = {
-    'data': tf.io.FixedLenFeature( [ params[ 'in_size'] ], tf.int64 ),
-    'label': tf.io.FixedLenFeature( [ params[ 'out_size' ] ], tf.float32 ),
-}
 
+print( "Building strategy & model." )
+strategy = tf.distribute.MirroredStrategy()
+print( 'Number of devices: {}'.format(strategy.num_replicas_in_sync))
+with strategy.scope():
+    model = make_or_restore_model( checkpoint_dir, "model.h5" )
+    in_size = model.layers[ 0 ].input_shape[ 1 ]
+    vocab_size = model.layers[ -1 ].output_shape[ 1 ]
+    print( model.summary() )
+
+xfeatures = {
+    'data': tf.io.FixedLenFeature( in_size, tf.int64 ),
+    'label': tf.io.FixedLenFeature( 1, tf.int64 ),
+}
 
 train_data = get_dataset( [ "train.tfrecords" ], xfeatures, params[ 'batch_size' ] )
 val_data = get_dataset( [ "val.tfrecords" ], xfeatures, params[ 'batch_size' ] )
 
+options = tf.data.Options()
+options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.DATA
+train_data = train_data.with_options( options )
+val_data = val_data.with_options( options )
 
 callbacks = [
     tf.keras.callbacks.ModelCheckpoint(
@@ -65,7 +79,7 @@ callbacks = [
         save_best_only = True,
     ),
     tf.keras.callbacks.EarlyStopping(
-        monitor = 'val_cosine_similarity', patience = 5, restore_best_weights = True
+        monitor = 'val_loss', patience = 5, restore_best_weights = True
     )
 ]
 

@@ -28,12 +28,17 @@ model.add( Embedding(
     input_length = config[ 'per_word_context' ],
     trainable = False
 ) )
-model.add( LSTM( 300, return_sequences = True ) )
+model.add( LSTM( 600, return_sequences = True ) )
 model.add( Dropout( 0.2 ) )
-model.add( LSTM( 300 ) )
-model.add( Dense( 600, activation = 'relu' ) )
-model.add( Dense( embed_dims ) )
-model.compile( loss = 'cosine_similarity', optimizer = 'adam', metrics = [ tf.keras.metrics.CosineSimilarity(axis=1) ] )
+# model.add( LSTM( 900, return_sequences = True ) )
+# model.add( Dropout( 0.2 ) )
+model.add( LSTM( 1200, return_sequences = True ) )
+model.add( Dropout( 0.2 ) )
+# model.add( LSTM( 900, return_sequences = True ) )
+# model.add( Dropout( 0.2 ) )
+model.add( LSTM( 600 ) )
+model.add( Dense( vocab_size, activation = 'softmax' ) )
+model.compile( loss = 'categorical_crossentropy', optimizer = 'adam', metrics = 'accuracy' )
 
 print( "Saving model..." )
 model.save( config[ 'model_file' ] )
@@ -45,7 +50,6 @@ params = {
     'batch_size': 512,
     'epochs': 100,
     'in_size': config[ 'per_word_context' ],
-    'out_size': 300
 }
 
 with open( config[ 'model_params' ], 'w' ) as f:
