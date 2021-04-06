@@ -1,0 +1,5 @@
+checkpoints
+*.h5
+*.json
+*.py
+*.tfrecords
